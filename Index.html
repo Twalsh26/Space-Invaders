@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders - Multi Level Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="uiPanel">
+            <div id="levelDisplay">Level 1</div>
+            <div id="scoreDisplay">Score: 0</div>
+            <div id="healthDisplay">Health: 100</div>
+            <div id="ammoDisplay">Ammo: 0/60</div>
+            <div id="enemyCount">Enemies: 0</div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="upgradePanel" style="display:none;">
+            <h2>Level Complete!</h2>
+            <p id="upgradeText"></p>
+            <div id="upgradeOptions">
+                <button onclick="game.selectUpgrade('damage')">Upgrade Damage</button>
+                <button onclick="game.selectUpgrade('health')">Upgrade Health</button>
+                <button onclick="game.selectUpgrade('fireRate')">Upgrade Fire Rate</button>
+            </div>
+            <button onclick="game.nextLevel()" id="nextLevelBtn">Next Level</button>
+        </div>
+        <div id="gameOverPanel" style="display:none;">
+            <h2>Game Over!</h2>
+            <p id="gameOverText"></p>
+            <button onclick="location.reload()">Play Again</button>
+        </div>
+        <div id="levelCompletePanel" style="display:none;">
+            <h2>All Levels Complete!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="java.js"></script>
+</body>
+</html>
