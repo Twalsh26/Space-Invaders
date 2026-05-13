@@ -16,7 +16,7 @@ const LEVEL_3 = 3;
 
 // Load Images
 const images = {};
-const imageCount = 2;
+const imageCount = 4;
 let imagesLoaded = 0;
 
 const imgPlayer = new Image();
@@ -27,11 +27,19 @@ const imgEnemy = new Image();
 imgEnemy.src = 'Img/EmenyBasicSprite.png';
 imgEnemy.onload = () => { images.enemy = imgEnemy; imagesLoaded++; };
 
+const imgSpeedy = new Image();
+imgSpeedy.src = 'Img/SpeedEmeny.png';
+imgSpeedy.onload = () => { images.speedy = imgSpeedy; imagesLoaded++; };
+
+const imgStrong = new Image();
+imgStrong.src = 'Img/BruteEmeny.png';
+imgStrong.onload = () => { images.strong = imgStrong; imagesLoaded++; };
+
 // Player Class
 class Player {
     constructor() {
         this.x = CANVAS.width / 2 - 50;
-        this.y = CANVAS.height - 120;
+        this.y = CANVAS.height - 200;
         this.width = 100;
         this.height = 100;
         this.speed = 8;
@@ -165,16 +173,39 @@ class Enemy {
         this.maxHealth = 1;
         this.damage = 1;
         this.velocityX = 2;
+        this.velocityY = 0.5;
+        this.direction = 1;
         this.shootChance = 0.01;
         this.color = '#8B7355';
     }
 
-    update() {
-        this.x += this.velocityX;
+    update(targetX, targetY, gameWidth) {
+        // Space Invaders-style horizontal movement
+        this.x += this.velocityX * this.direction;
+        
+        // Move down periodically (when reaching screen edges)
+        if (this.x <= 0 || this.x + this.width >= gameWidth) {
+            this.direction *= -1;
+            this.y += 40;
+        }
+        
+        // Also slowly move down toward target
+        if (this.y < targetY - 200) {
+            this.y += this.velocityY;
+        }
     }
 
     draw() {
-        if (images.enemy) {
+        let enemyImage = null;
+        if (this.type === 'speedy') {
+            enemyImage = images.speedy;
+        } else if (this.type === 'strong') {
+            enemyImage = images.strong;
+        } else {
+            enemyImage = images.enemy;
+        }
+
+        if (enemyImage) {
             CTX.save();
             CTX.globalAlpha = 1;
             
@@ -184,7 +215,7 @@ class Enemy {
             CTX.fillRect(this.x, this.y, this.width, this.height);
             CTX.globalCompositeOperation = 'source-over';
             
-            CTX.drawImage(images.enemy, this.x, this.y, this.width, this.height);
+            CTX.drawImage(enemyImage, this.x, this.y, this.width, this.height);
             CTX.restore();
         } else {
             CTX.fillStyle = this.color;
@@ -226,7 +257,9 @@ class BasicEnemy extends Enemy {
         this.health = 1;
         this.maxHealth = 1;
         this.damage = 1;
-        this.velocityX = 2 * direction;
+        this.velocityX = 1.5;
+        this.velocityY = 0.3;
+        this.direction = direction;
         this.shootChance = 0.008;
         this.color = '#8B7355';
     }
@@ -239,7 +272,9 @@ class SpeedyEnemy extends Enemy {
         this.health = 1;
         this.maxHealth = 1;
         this.damage = 2;
-        this.velocityX = 4 * direction;
+        this.velocityX = 2.5;
+        this.velocityY = 0.4;
+        this.direction = direction;
         this.shootChance = 0.02;
         this.color = '#00AA00';
     }
@@ -252,7 +287,9 @@ class StrongEnemy extends Enemy {
         this.health = 3;
         this.maxHealth = 3;
         this.damage = 3;
-        this.velocityX = 1 * direction;
+        this.velocityX = 1;
+        this.velocityY = 0.25;
+        this.direction = direction;
         this.shootChance = 0.015;
         this.color = '#AA0000';
     }
@@ -294,6 +331,89 @@ class EnemyBullet {
     }
 }
 
+// Wall Class
+class Wall {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 100;
+        this.height = 100;
+        this.health = 25;
+        this.maxHealth = 25;
+        this.color = '#808080'; // Gray
+    }
+
+    update() {
+        // Walls don't move
+    }
+
+    draw() {
+        CTX.fillStyle = this.color;
+        CTX.fillRect(this.x, this.y, this.width, this.height);
+
+        // Draw health bar
+        CTX.fillStyle = '#f00';
+        CTX.fillRect(this.x, this.y - 8, (this.width * this.health) / this.maxHealth, 4);
+        CTX.strokeStyle = '#f00';
+        CTX.strokeRect(this.x, this.y - 8, this.width, 4);
+    }
+
+    takeDamage(damage) {
+        this.health -= damage;
+    }
+
+    isAlive() {
+        return this.health > 0;
+    }
+}
+
+// Generator Class
+class Generator {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 40;
+        this.health = 50;
+        this.maxHealth = 50;
+        this.color = '#87CEEB'; // Light blue
+        this.pulsePhase = 0;
+    }
+
+    update() {
+        this.pulsePhase += 0.05;
+    }
+
+    draw() {
+        // Draw main circle
+        CTX.fillStyle = this.color;
+        CTX.beginPath();
+        CTX.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        CTX.fill();
+
+        // Draw pulsing white center
+        const pulse = Math.abs(Math.sin(this.pulsePhase));
+        const centerRadius = 15 + pulse * 5;
+        CTX.fillStyle = 'white';
+        CTX.beginPath();
+        CTX.arc(this.x, this.y, centerRadius, 0, Math.PI * 2);
+        CTX.fill();
+
+        // Draw health bar
+        CTX.fillStyle = '#f00';
+        CTX.fillRect(this.x - this.radius, this.y - this.radius - 15, (this.radius * 2 * this.health) / this.maxHealth, 4);
+        CTX.strokeStyle = '#f00';
+        CTX.strokeRect(this.x - this.radius, this.y - this.radius - 15, this.radius * 2, 4);
+    }
+
+    takeDamage(damage) {
+        this.health -= damage;
+    }
+
+    isAlive() {
+        return this.health > 0;
+    }
+}
+
 // Game Class
 class Game {
     constructor() {
@@ -303,6 +423,8 @@ class Game {
         this.bullets = [];
         this.enemyBullets = [];
         this.ammoDrops = [];
+        this.walls = [];
+        this.generator = null;
         this.score = 0;
         this.scoreGoal = 5000;
         this.gameRunning = true;
@@ -335,8 +457,28 @@ class Game {
         this.bullets = [];
         this.enemyBullets = [];
         this.ammoDrops = [];
+        this.walls = [];
         this.enemySpawnTimer = 0;
         this.waveCount = 0;
+
+        // Create generator in front of the player
+        const generatorX = CANVAS.width / 2;
+        const generatorY = CANVAS.height - 50;
+        this.generator = new Generator(generatorX, generatorY);
+
+        // Create 3 walls spaced forward and spread out (more forward than generator)
+        const wallDistance = 250;
+        const wall1X = generatorX - wallDistance;
+        const wall1Y = generatorY - 265;
+        this.walls.push(new Wall(wall1X, wall1Y));
+
+        const wall2X = generatorX;
+        const wall2Y = generatorY - 285;
+        this.walls.push(new Wall(wall2X, wall2Y));
+
+        const wall3X = generatorX + wallDistance;
+        const wall3Y = generatorY - 265;
+        this.walls.push(new Wall(wall3X, wall3Y));
 
         if (this.level === LEVEL_1) {
             this.maxEnemies = 5;
@@ -356,28 +498,29 @@ class Game {
     spawnEnemy() {
         if (this.enemies.length >= this.maxEnemies) return;
 
-        const y = Math.random() * (CANVAS.height - 90);
+        // Spawn enemies at the top of the screen in a row
+        const spawnY = 50 + (this.enemies.length * 80);
+        const spawnX = Math.random() * (CANVAS.width - 90);
         const direction = Math.random() < 0.5 ? 1 : -1;
-        const x = direction === 1 ? -90 : CANVAS.width;
         let enemy;
 
         if (this.level === LEVEL_1) {
-            enemy = new BasicEnemy(x, y, direction);
+            enemy = new BasicEnemy(spawnX, spawnY, direction);
         } else if (this.level === LEVEL_2) {
             const rand = Math.random();
             if (rand < 0.7) {
-                enemy = new BasicEnemy(x, y, direction);
+                enemy = new BasicEnemy(spawnX, spawnY, direction);
             } else {
-                enemy = new SpeedyEnemy(x, y, direction);
+                enemy = new SpeedyEnemy(spawnX, spawnY, direction);
             }
         } else if (this.level === LEVEL_3) {
             const rand = Math.random();
             if (rand < 0.5) {
-                enemy = new BasicEnemy(x, y, direction);
+                enemy = new BasicEnemy(spawnX, spawnY, direction);
             } else if (rand < 0.8) {
-                enemy = new SpeedyEnemy(x, y, direction);
+                enemy = new SpeedyEnemy(spawnX, spawnY, direction);
             } else {
-                enemy = new StrongEnemy(x, y, direction);
+                enemy = new StrongEnemy(spawnX, spawnY, direction);
             }
         }
 
@@ -399,7 +542,7 @@ class Game {
 
         // Update and manage enemies
         this.enemies = this.enemies.filter((enemy) => {
-            enemy.update();
+            enemy.update(this.generator.x, this.generator.y, CANVAS.width);
 
             // Enemy shoots
             if (enemy.canShoot()) {
@@ -440,6 +583,10 @@ class Game {
             }
         }
 
+        // Update walls and generator
+        this.walls.forEach((wall) => wall.update());
+        if (this.generator) this.generator.update();
+
         // Check collisions: enemy bullets hitting player
         for (let i = 0; i < this.enemyBullets.length; i++) {
             if (this.checkCollision(this.enemyBullets[i], this.player)) {
@@ -452,6 +599,36 @@ class Game {
                 }
             }
         }
+
+        // Check collisions: enemy bullets hitting walls
+        for (let i = 0; i < this.enemyBullets.length; i++) {
+            for (let j = 0; j < this.walls.length; j++) {
+                if (this.checkCollisionCircleRect(this.enemyBullets[i], this.walls[j])) {
+                    this.walls[j].takeDamage(1);
+                    this.enemyBullets.splice(i, 1);
+                    i--;
+                    break;
+                }
+            }
+        }
+
+        // Check collisions: enemy bullets hitting generator
+        if (this.generator) {
+            for (let i = 0; i < this.enemyBullets.length; i++) {
+                if (this.checkCollisionCircle(this.enemyBullets[i], this.generator)) {
+                    this.generator.takeDamage(1);
+                    this.enemyBullets.splice(i, 1);
+                    i--;
+                    if (!this.generator.isAlive()) {
+                        this.gameOver();
+                    }
+                    break;
+                }
+            }
+        }
+
+        // Remove destroyed walls
+        this.walls = this.walls.filter((wall) => wall.isAlive());
 
         // Update ammo drops
         this.ammoDrops = this.ammoDrops.filter((ammo) => {
@@ -485,6 +662,29 @@ class Game {
         );
     }
 
+    checkCollisionCircle(bullet, generator) {
+        const dx = bullet.x + bullet.width / 2 - generator.x;
+        const dy = bullet.y + bullet.height / 2 - generator.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < generator.radius + bullet.width / 2;
+    }
+
+    checkCollisionCircleRect(bullet, wall) {
+        const bulletCenterX = bullet.x + bullet.width / 2;
+        const bulletCenterY = bullet.y + bullet.height / 2;
+        const bulletRadius = bullet.width / 2;
+
+        // Find closest point on wall to bullet center
+        const closestX = Math.max(wall.x, Math.min(bulletCenterX, wall.x + wall.width));
+        const closestY = Math.max(wall.y, Math.min(bulletCenterY, wall.y + wall.height));
+
+        const dx = bulletCenterX - closestX;
+        const dy = bulletCenterY - closestY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        return distance < bulletRadius;
+    }
+
     getEnemyPoints(enemy) {
         if (enemy.type === 'basic') return 100;
         if (enemy.type === 'speedy') return 250;
@@ -496,11 +696,11 @@ class Game {
         let dropChance = 0;
         
         if (enemy.type === 'basic') {
-            dropChance = 0.10; // 10% chance
-        } else if (enemy.type === 'speedy') {
             dropChance = 0.25; // 25% chance
-        } else if (enemy.type === 'strong') {
+        } else if (enemy.type === 'speedy') {
             dropChance = 0.40; // 40% chance
+        } else if (enemy.type === 'strong') {
+            dropChance = 0.50; // 50% chance
         }
         
         if (Math.random() < dropChance) {
@@ -519,6 +719,8 @@ class Game {
         this.enemies.forEach((enemy) => enemy.draw());
         this.enemyBullets.forEach((bullet) => bullet.draw());
         this.ammoDrops.forEach((ammo) => ammo.draw());
+        this.walls.forEach((wall) => wall.draw());
+        if (this.generator) this.generator.draw();
     }
 
     updateUI() {
@@ -527,6 +729,9 @@ class Game {
         document.getElementById('healthDisplay').textContent = `Health: ${Math.max(0, this.player.health)}`;
         document.getElementById('ammoDisplay').textContent = `Ammo: ${this.player.ammo}/${this.player.maxAmmo}`;
         document.getElementById('enemyCount').textContent = `Enemies: ${this.enemies.length}`;
+        if (this.generator) {
+            document.getElementById('generatorHealth').textContent = `Generator: ${Math.max(0, this.generator.health)}/50`;
+        }
     }
 
     levelComplete() {
