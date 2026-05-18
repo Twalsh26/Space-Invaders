@@ -13,10 +13,12 @@ window.addEventListener('resize', resizeCanvas);
 const LEVEL_1 = 1;
 const LEVEL_2 = 2;
 const LEVEL_3 = 3;
+const LEVEL_4 = 4;
+const LEVEL_5 = 5;
 
 // Load Images
 const images = {};
-const imageCount = 4;
+const imageCount = 5;
 let imagesLoaded = 0;
 
 const imgPlayer = new Image();
@@ -35,6 +37,10 @@ const imgStrong = new Image();
 imgStrong.src = 'Img/BruteEmeny.png';
 imgStrong.onload = () => { images.strong = imgStrong; imagesLoaded++; };
 
+const imgBoss = new Image();
+imgBoss.src = 'Img/BossBug.png';
+imgBoss.onload = () => { images.boss = imgBoss; imagesLoaded++; };
+
 // Player Class
 class Player {
     constructor() {
@@ -46,7 +52,7 @@ class Player {
         this.health = 100;
         this.maxHealth = 100;
         this.ammo = 30;
-        this.maxAmmo = 60;
+        this.maxAmmo = 100;
         this.damage = 1;
         this.fireRate = 300; // milliseconds between shots
         this.lastShot = 0;
@@ -161,6 +167,63 @@ class AmmoDrop {
     }
 }
 
+// Wall Repair Powerup Class
+class WallRepairPowerup {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 24;
+        this.height = 24;
+        this.speed = 3;
+        this.type = 'wall';
+    }
+
+    update() {
+        this.y += this.speed;
+    }
+
+    draw() {
+        CTX.fillStyle = '#888';
+        CTX.fillRect(this.x, this.y, this.width, this.height);
+        CTX.strokeStyle = '#555';
+        CTX.lineWidth = 3;
+        CTX.strokeRect(this.x, this.y, this.width, this.height);
+    }
+
+    isOffScreen() {
+        return this.y > CANVAS.height;
+    }
+}
+
+// Health Restore Powerup Class
+class HealthRestorePowerup {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 24;
+        this.height = 24;
+        this.speed = 3;
+        this.type = 'health';
+        this.healAmount = 8;
+    }
+
+    update() {
+        this.y += this.speed;
+    }
+
+    draw() {
+        CTX.fillStyle = '#ff69b4';
+        CTX.fillRect(this.x, this.y, this.width, this.height);
+        CTX.strokeStyle = '#ff1493';
+        CTX.lineWidth = 3;
+        CTX.strokeRect(this.x, this.y, this.width, this.height);
+    }
+
+    isOffScreen() {
+        return this.y > CANVAS.height;
+    }
+}
+
 // Enemy Base Class
 class Enemy {
     constructor(x, y, type = 'basic') {
@@ -179,7 +242,7 @@ class Enemy {
         this.color = '#8B7355';
     }
 
-    update(targetX, targetY, gameWidth) {
+    update(targetX, targetY, gameWidth, boundaryY) {
         // Space Invaders-style horizontal movement
         this.x += this.velocityX * this.direction;
         
@@ -192,6 +255,11 @@ class Enemy {
         // Also slowly move down toward target
         if (this.y < targetY - 200) {
             this.y += this.velocityY;
+        }
+
+        // Prevent enemies from moving below the wall row
+        if (boundaryY !== undefined && this.y + this.height > boundaryY) {
+            this.y = boundaryY - this.height;
         }
     }
 
@@ -414,6 +482,103 @@ class Generator {
     }
 }
 
+// Laser Class (for boss)
+class Laser {
+    constructor(x, y, direction = 1) {
+        this.x = x;
+        this.y = y;
+        this.width = 40;
+        this.height = 15;
+        this.speed = 15;
+        this.direction = direction;
+        this.color = '#FF0000';
+    }
+
+    update() {
+        this.x += this.speed * this.direction;
+    }
+
+    draw() {
+        CTX.fillStyle = this.color;
+        CTX.fillRect(this.x, this.y, this.width, this.height);
+        CTX.strokeStyle = '#FF3333';
+        CTX.lineWidth = 2;
+        CTX.strokeRect(this.x, this.y, this.width, this.height);
+    }
+
+    isOffScreen() {
+        return this.x > CANVAS.width || this.x + this.width < 0;
+    }
+}
+
+// Boss Class
+class Boss {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 200;
+        this.height = 200;
+        this.health = 100;
+        this.maxHealth = 100;
+        this.speed = 3;
+        this.direction = 1;
+        this.attackTimer = 0;
+        this.attackInterval = 120;
+        this.minionSpawnTimer = 0;
+        this.minionSpawnInterval = 300;
+        this.lastLaserTime = 0;
+        this.laserCooldown = 400;
+        this.color = '#FF6600';
+    }
+
+    update(gameWidth) {
+        // Move back and forth
+        this.x += this.speed * this.direction;
+        if (this.x <= 50 || this.x + this.width >= gameWidth - 50) {
+            this.direction *= -1;
+        }
+
+        this.attackTimer++;
+        this.minionSpawnTimer++;
+    }
+
+    draw() {
+        if (images.boss) {
+            CTX.drawImage(images.boss, this.x, this.y, this.width, this.height);
+        } else {
+            CTX.fillStyle = this.color;
+            CTX.fillRect(this.x, this.y, this.width, this.height);
+        }
+
+        // Draw health bar
+        CTX.fillStyle = '#f00';
+        CTX.fillRect(this.x, this.y - 15, (this.width * this.health) / this.maxHealth, 8);
+        CTX.strokeStyle = '#f00';
+        CTX.lineWidth = 2;
+        CTX.strokeRect(this.x, this.y - 15, this.width, 8);
+    }
+
+    takeDamage(damage) {
+        this.health -= damage;
+    }
+
+    isAlive() {
+        return this.health > 0;
+    }
+
+    canAttack() {
+        return this.attackTimer >= this.attackInterval;
+    }
+
+    canLaser() {
+        return Date.now() - this.lastLaserTime >= this.laserCooldown;
+    }
+
+    canSpawnMinion() {
+        return this.minionSpawnTimer >= this.minionSpawnInterval;
+    }
+}
+
 // Game Class
 class Game {
     constructor() {
@@ -423,15 +588,22 @@ class Game {
         this.bullets = [];
         this.enemyBullets = [];
         this.ammoDrops = [];
+        this.powerups = [];
         this.walls = [];
+        this.wallsInitialized = false;
         this.generator = null;
+        this.boss = null;
+        this.bosslasers = [];
         this.score = 0;
-        this.scoreGoal = 5000;
+        this.killsThisLevel = 0;
+        this.killGoal = 25;
         this.gameRunning = true;
+        this.bossIntroActive = false;
         this.enemySpawnTimer = 0;
         this.enemySpawnInterval = 80;
         this.maxEnemies = 5;
         this.waveCount = 0;
+        this.enemyBoundaryY = CANVAS.height * 0.5; // Fixed boundary for enemies
 
         this.setupKeyListeners();
         this.initLevel();
@@ -457,7 +629,11 @@ class Game {
         this.bullets = [];
         this.enemyBullets = [];
         this.ammoDrops = [];
-        this.walls = [];
+        this.powerups = [];
+        this.bossLasers = [];
+        this.boss = null;
+        this.killsThisLevel = 0;
+        // Keep existing walls across levels so they do not respawn each round
         this.enemySpawnTimer = 0;
         this.waveCount = 0;
 
@@ -466,32 +642,50 @@ class Game {
         const generatorY = CANVAS.height - 50;
         this.generator = new Generator(generatorX, generatorY);
 
-        // Create 3 walls spaced forward and spread out (more forward than generator)
-        const wallDistance = 250;
-        const wall1X = generatorX - wallDistance;
-        const wall1Y = generatorY - 265;
-        this.walls.push(new Wall(wall1X, wall1Y));
+        if (!this.wallsInitialized) {
+            // Create 3 walls spaced forward and spread out (more forward than generator)
+            const wallDistance = 250;
+            const wall1X = generatorX - wallDistance - 500;
+            const wall1Y = generatorY - 265;
+            this.walls.push(new Wall(wall1X, wall1Y));
 
-        const wall2X = generatorX;
-        const wall2Y = generatorY - 285;
-        this.walls.push(new Wall(wall2X, wall2Y));
+            const wall2X = generatorX - 50;
+            const wall2Y = generatorY - 285;
+            this.walls.push(new Wall(wall2X, wall2Y));
 
-        const wall3X = generatorX + wallDistance;
-        const wall3Y = generatorY - 265;
-        this.walls.push(new Wall(wall3X, wall3Y));
+            const wall3X = generatorX + wallDistance + 500;
+            const wall3Y = generatorY - 265;
+            this.walls.push(new Wall(wall3X, wall3Y));
+
+            this.wallsInitialized = true;
+            // Set enemy boundary based on wall positions
+            this.enemyBoundaryY = Math.min(...this.walls.map((wall) => wall.y)) - 10;
+        }
 
         if (this.level === LEVEL_1) {
             this.maxEnemies = 5;
             this.enemySpawnInterval = 100;
-            this.scoreGoal = 5000;
+            this.killGoal = 25;
         } else if (this.level === LEVEL_2) {
             this.maxEnemies = 8;
             this.enemySpawnInterval = 80;
-            this.scoreGoal = 10000;
+            this.killGoal = 35;
         } else if (this.level === LEVEL_3) {
             this.maxEnemies = 10;
             this.enemySpawnInterval = 60;
-            this.scoreGoal = 15000;
+            this.killGoal = 45;
+        } else if (this.level === LEVEL_4) {
+            this.maxEnemies = 12;
+            this.enemySpawnInterval = 40;
+            this.killGoal = 50;
+        } else if (this.level === LEVEL_5) {
+            this.bossIntroActive = true;
+            this.bossIntroTimer = 0;
+            this.gameRunning = false;
+            this.boss = new Boss(CANVAS.width / 2 - 100, 50);
+            this.maxEnemies = 8;
+            this.enemySpawnInterval = 150;
+            this.killGoal = 1;
         }
     }
 
@@ -522,6 +716,30 @@ class Game {
             } else {
                 enemy = new StrongEnemy(spawnX, spawnY, direction);
             }
+        } else if (this.level === LEVEL_4) {
+            const rand = Math.random();
+            if (rand < 0.4) {
+                enemy = new BasicEnemy(spawnX, spawnY, direction);
+            } else if (rand < 0.8) {
+                enemy = new SpeedyEnemy(spawnX, spawnY, direction);
+            } else {
+                enemy = new StrongEnemy(spawnX, spawnY, direction);
+            }
+
+            enemy.velocityX *= 1.3;
+            enemy.velocityY *= 1.3;
+            enemy.damage += 1;
+            enemy.maxHealth += 1;
+            enemy.health += 1;
+        } else if (this.level === LEVEL_5) {
+            const rand = Math.random();
+            if (rand < 0.5) {
+                enemy = new BasicEnemy(spawnX, spawnY, direction);
+            } else if (rand < 0.8) {
+                enemy = new SpeedyEnemy(spawnX, spawnY, direction);
+            } else {
+                enemy = new StrongEnemy(spawnX, spawnY, direction);
+            }
         }
 
         this.enemies.push(enemy);
@@ -542,7 +760,7 @@ class Game {
 
         // Update and manage enemies
         this.enemies = this.enemies.filter((enemy) => {
-            enemy.update(this.generator.x, this.generator.y, CANVAS.width);
+            enemy.update(this.generator.x, this.generator.y, CANVAS.width, this.enemyBoundaryY);
 
             // Enemy shoots
             if (enemy.canShoot()) {
@@ -555,7 +773,17 @@ class Game {
         // Update bullets
         this.bullets = this.bullets.filter((bullet) => {
             bullet.update();
-            return !bullet.isOffScreen();
+            let hitWall = false;
+
+            for (let j = 0; j < this.walls.length; j++) {
+                if (this.checkCollision(bullet, this.walls[j])) {
+                    this.walls[j].takeDamage(this.player.damage);
+                    hitWall = true;
+                    break;
+                }
+            }
+
+            return !bullet.isOffScreen() && !hitWall;
         });
 
         // Update enemy bullets
@@ -574,6 +802,7 @@ class Game {
 
                     if (!this.enemies[j].isAlive()) {
                         this.score += this.getEnemyPoints(this.enemies[j]);
+                        this.killsThisLevel += 1;
                         this.checkAmmoDrop(this.enemies[j]);
                         this.enemies.splice(j, 1);
                         j--;
@@ -636,6 +865,12 @@ class Game {
             return !ammo.isOffScreen();
         });
 
+        // Update powerups
+        this.powerups = this.powerups.filter((powerup) => {
+            powerup.update();
+            return !powerup.isOffScreen();
+        });
+
         // Check collisions: ammo drops with player
         for (let i = 0; i < this.ammoDrops.length; i++) {
             if (this.checkCollision(this.ammoDrops[i], this.player)) {
@@ -645,8 +880,21 @@ class Game {
             }
         }
 
+        // Check collisions: powerups with player
+        for (let i = 0; i < this.powerups.length; i++) {
+            if (this.checkCollision(this.powerups[i], this.player)) {
+                if (this.powerups[i].type === 'wall') {
+                    this.applyWallRepairPowerup();
+                } else if (this.powerups[i].type === 'health') {
+                    this.player.health = Math.min(this.player.maxHealth, this.player.health + this.powerups[i].healAmount);
+                }
+                this.powerups.splice(i, 1);
+                i--;
+            }
+        }
+
         // Check if level complete
-        if (this.score >= this.scoreGoal) {
+        if (this.killsThisLevel >= this.killGoal) {
             this.levelComplete();
         }
 
@@ -706,6 +954,29 @@ class Game {
         if (Math.random() < dropChance) {
             this.ammoDrops.push(new AmmoDrop(enemy.x + enemy.width / 2 - 10, enemy.y));
         }
+
+        if (Math.random() < 0.15) {
+            this.powerups.push(new WallRepairPowerup(enemy.x + enemy.width / 2 - 12, enemy.y));
+        }
+
+        if (Math.random() < 0.13) {
+            this.powerups.push(new HealthRestorePowerup(enemy.x + enemy.width / 2 - 12, enemy.y));
+        }
+    }
+
+    applyWallRepairPowerup() {
+        if (this.walls.length === 0) return;
+
+        // Prioritize center wall (middle wall, index 1)
+        let targetWall = this.walls[1]; // Center wall
+        if (!targetWall || !targetWall.isAlive()) {
+            // If center wall is dead, pick from other alive walls
+            const aliveWalls = this.walls.filter((wall) => wall.isAlive());
+            if (aliveWalls.length === 0) return;
+            targetWall = aliveWalls[0];
+        }
+
+        targetWall.health = Math.min(targetWall.maxHealth, targetWall.health + 10);
     }
 
     draw() {
@@ -719,13 +990,15 @@ class Game {
         this.enemies.forEach((enemy) => enemy.draw());
         this.enemyBullets.forEach((bullet) => bullet.draw());
         this.ammoDrops.forEach((ammo) => ammo.draw());
+        this.powerups.forEach((powerup) => powerup.draw());
         this.walls.forEach((wall) => wall.draw());
         if (this.generator) this.generator.draw();
     }
 
     updateUI() {
         document.getElementById('levelDisplay').textContent = `Level ${this.level}`;
-        document.getElementById('scoreDisplay').textContent = `Score: ${this.score} / ${this.scoreGoal}`;
+        document.getElementById('scoreDisplay').textContent = `Score: ${this.score}`;
+        document.getElementById('killsDisplay').textContent = `Kills: ${this.killsThisLevel}/${this.killGoal}`;
         document.getElementById('healthDisplay').textContent = `Health: ${Math.max(0, this.player.health)}`;
         document.getElementById('ammoDisplay').textContent = `Ammo: ${this.player.ammo}/${this.player.maxAmmo}`;
         document.getElementById('enemyCount').textContent = `Enemies: ${this.enemies.length}`;
@@ -737,8 +1010,12 @@ class Game {
     levelComplete() {
         this.gameRunning = false;
         document.getElementById('upgradePanel').style.display = 'block';
-        const nextLevel = this.level < LEVEL_3 ? this.level + 1 : 3;
-        document.getElementById('upgradeText').textContent = `Level ${this.level} Complete! Score: ${this.score} / ${this.scoreGoal}. Choose an upgrade to advance to Level ${nextLevel}.`;
+        if (this.level < LEVEL_4) {
+            const nextLevel = this.level + 1;
+            document.getElementById('upgradeText').textContent = `Level ${this.level} Complete! Kills: ${this.killsThisLevel}/${this.killGoal}. Choose an upgrade to advance to Level ${nextLevel}.`;
+        } else {
+            document.getElementById('upgradeText').textContent = `Level ${this.level} Complete! Kills: ${this.killsThisLevel}/${this.killGoal}. Final level complete.`;
+        }
     }
 
     selectUpgrade(upgrade) {
@@ -752,7 +1029,7 @@ class Game {
     }
 
     nextLevel() {
-        if (this.level < LEVEL_3) {
+        if (this.level < LEVEL_4) {
             this.level++;
             this.player.ammo = 30; // Refill ammo for next level
             this.gameRunning = true;
@@ -785,7 +1062,12 @@ class Game {
 
 // Initialize and start game
 let game;
-window.addEventListener('load', () => {
+
+function startGame() {
+    // Hide menu and show game container
+    document.getElementById('mainMenuPanel').style.display = 'none';
+    document.getElementById('gameContainer').style.display = 'block';
+    
     // Wait for images to load
     const checkImagesLoaded = setInterval(() => {
         if (imagesLoaded === imageCount) {
@@ -794,4 +1076,8 @@ window.addEventListener('load', () => {
             game.gameLoop();
         }
     }, 100);
+}
+
+window.addEventListener('load', () => {
+    // Menu is shown by default, waiting for play button click
 });

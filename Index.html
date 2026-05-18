@@ -3,17 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Multi Level Game</title>
+    <title>Space Divers! - Multi Level Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="gameContainer">
+    <div id="mainMenuPanel">
+        <div id="menuContent">
+            <h1 id="gameTitle">SPACE DIVERS!</h1>
+            <p id="menuSubtitle">Defend the generator from invaders</p>
+            <button id="playButton" onclick="startGame()">PLAY</button>
+        </div>
+    </div>
+    <div id="gameContainer" style="display:none;">
         <div id="uiPanel">
             <div id="levelDisplay">Level 1</div>
             <div id="scoreDisplay">Score: 0</div>
+            <div id="killsDisplay">Kills: 0/25</div>
             <div id="healthDisplay">Health: 100</div>
             <div id="generatorHealth">Generator: 50/50</div>
-            <div id="ammoDisplay">Ammo: 0/60</div>
+            <div id="ammoDisplay">Ammo: 0/100</div>
             <div id="enemyCount">Enemies: 0</div>
         </div>
         <canvas id="gameCanvas"></canvas>

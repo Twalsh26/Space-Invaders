@@ -12,6 +12,74 @@ body {
     overflow: hidden;
 }
 
+#mainMenuPanel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #000 0%, #0a2a0a 50%, #000 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#menuContent {
+    text-align: center;
+    animation: fadeIn 0.8s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#gameTitle {
+    font-size: 120px;
+    font-weight: bold;
+    color: #00ff00;
+    text-shadow: 0 0 20px #00ff00, 0 0 40px #00aa00, 0 0 60px #008800;
+    margin-bottom: 30px;
+    letter-spacing: 8px;
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { text-shadow: 0 0 20px #00ff00, 0 0 40px #00aa00, 0 0 60px #008800; }
+    50% { text-shadow: 0 0 30px #00ff00, 0 0 50px #00cc00, 0 0 80px #00aa00; }
+}
+
+#menuSubtitle {
+    font-size: 28px;
+    color: #00ff00;
+    margin-bottom: 60px;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+#playButton {
+    padding: 30px 80px;
+    font-size: 48px;
+    background: #00ff00;
+    border: 4px solid #00aa00;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #000;
+    transition: all 0.3s;
+    box-shadow: 0 0 20px #00ff00;
+}
+
+#playButton:hover {
+    background: #00cc00;
+    box-shadow: 0 0 40px #00ff00, 0 0 60px #00aa00;
+    transform: scale(1.1);
+}
+
+#playButton:active {
+    transform: scale(0.95);
+}
+
 #gameContainer {
     position: fixed;
     top: 0;
