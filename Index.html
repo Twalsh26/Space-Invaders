@@ -8,10 +8,25 @@
 </head>
 <body>
     <div id="mainMenuPanel">
+        <button id="adminButton" title="Admin panel" onclick="toggleAdminPanel()"></button>
         <div id="menuContent">
             <h1 id="gameTitle">SPACE DIVERS!</h1>
             <p id="menuSubtitle">Defend the generator from invaders</p>
             <button id="playButton" onclick="startGame()">PLAY</button>
+        </div>
+        <div id="adminPanel" style="display:none;">
+            <h2>Admin Level Select</h2>
+            <p>Select the level to start on.</p>
+            <div id="adminLevelButtons">
+                <button class="adminLevelBtn selected" onclick="selectAdminLevel(1)">Level 1</button>
+                <button class="adminLevelBtn" onclick="selectAdminLevel(2)">Level 2</button>
+                <button class="adminLevelBtn" onclick="selectAdminLevel(3)">Level 3</button>
+                <button class="adminLevelBtn" onclick="selectAdminLevel(4)">Level 4</button>
+                <button class="adminLevelBtn" onclick="selectAdminLevel(5)">Level 5</button>
+            </div>
+            <div id="adminPanelActions">
+                <button onclick="closeAdminPanel()">Close</button>
+            </div>
         </div>
     </div>
     <div id="gameContainer" style="display:none;">
@@ -28,10 +43,20 @@
         <div id="upgradePanel" style="display:none;">
             <h2>Level Complete!</h2>
             <p id="upgradeText"></p>
+            <p id="upgradeDetailText">Choose one upgrade and press NEXT LEVEL when ready.</p>
             <div id="upgradeOptions">
-                <button onclick="game.selectUpgrade('damage')">Upgrade Damage</button>
-                <button onclick="game.selectUpgrade('health')">Upgrade Health</button>
-                <button onclick="game.selectUpgrade('fireRate')">Upgrade Fire Rate</button>
+                <button id="btnUpgradeDamage" class="upgradeOption" onclick="game.selectUpgrade('damage', this)">
+                    Damage
+                    <span class="upgradeSmallText">+0.5 shot damage</span>
+                </button>
+                <button id="btnUpgradeHealth" class="upgradeOption" onclick="game.selectUpgrade('health', this)">
+                    Health
+                    <span class="upgradeSmallText">+30 max health, full heal</span>
+                </button>
+                <button id="btnUpgradeFireRate" class="upgradeOption" onclick="game.selectUpgrade('fireRate', this)">
+                    Fire Rate
+                    <span class="upgradeSmallText">-50ms between shots</span>
+                </button>
             </div>
             <button onclick="game.nextLevel()" id="nextLevelBtn">Next Level</button>
         </div>

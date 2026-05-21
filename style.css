@@ -23,6 +23,7 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    pointer-events: auto;
 }
 
 #menuContent {
@@ -80,6 +81,73 @@ body {
     transform: scale(0.95);
 }
 
+#adminButton {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 1010;
+}
+
+#adminPanel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 340px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 3px solid #00ff00;
+    border-radius: 20px;
+    padding: 20px;
+    color: #0ff;
+    text-align: center;
+    box-shadow: 0 0 30px #00ff;
+    z-index: 1011;
+}
+
+#adminPanel h2 {
+    margin-bottom: 10px;
+    font-size: 32px;
+    color: #00ff00;
+}
+
+#adminPanel p {
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #0ff;
+}
+
+#adminLevelButtons {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.adminLevelBtn {
+    background: rgba(0, 255, 0, 0.1);
+    border: 2px solid #0f0;
+    color: #0ff;
+    font-size: 18px;
+    padding: 12px 0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.25s, transform 0.25s, border-color 0.25s;
+}
+
+.adminLevelBtn:hover,
+.adminLevelBtn.selected {
+    background: rgba(0, 255, 0, 0.25);
+    border-color: #00ff00;
+    transform: translateY(-1px);
+}
+
+#adminPanelActions button {
+    width: 100%;
+}
+
 #gameContainer {
     position: fixed;
     top: 0;
@@ -87,6 +155,7 @@ body {
     width: 100vw;
     height: 100vh;
     background: #000;
+    pointer-events: none;
 }
 
 #gameCanvas {
@@ -94,6 +163,7 @@ body {
     width: 100%;
     height: 100%;
     background: #000;
+    pointer-events: none;
 }
 
 #uiPanel {
@@ -149,6 +219,50 @@ body {
     gap: 20px;
     margin-bottom: 40px;
     justify-content: center;
+    flex-wrap: wrap;
+}
+
+.upgradeOption {
+    width: 180px;
+    min-height: 120px;
+    padding: 20px;
+    font-size: 22px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid #0f0;
+    border-radius: 18px;
+    cursor: pointer;
+    color: #0ff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.upgradeOption:hover {
+    background: rgba(0, 255, 0, 0.15);
+}
+
+.upgradeOption.selected {
+    background: rgba(0, 255, 0, 0.4);
+    border-color: #0ff;
+    color: #000;
+    box-shadow: 0 0 18px rgba(0, 255, 0, 0.7);
+}
+
+.upgradeSmallText {
+    margin-top: 12px;
+    font-size: 16px;
+    color: #9ff;
+    line-height: 1.2;
+}
+
+#upgradeDetailText {
+    color: #9ff;
+    margin: 0 auto 30px;
+    max-width: 560px;
+    font-size: 20px;
 }
 
 button {
