@@ -292,3 +292,183 @@ button:active {
     padding: 25px 60px;
     font-size: 28px;
 }
+
+/* Name Entry Panel */
+#nameEntryPanel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #000 0%, #0a2a0a 50%, #000 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    pointer-events: auto;
+}
+
+#nameEntryContent {
+    text-align: center;
+    animation: fadeIn 0.8s ease-in;
+}
+
+#nameEntryTitle {
+    font-size: 80px;
+    font-weight: bold;
+    color: #00ff00;
+    text-shadow: 0 0 20px #00ff00, 0 0 40px #00aa00;
+    margin-bottom: 50px;
+    letter-spacing: 5px;
+}
+
+#nameInputSection {
+    margin-bottom: 40px;
+}
+
+#playerName {
+    padding: 20px 30px;
+    font-size: 32px;
+    background: rgba(0, 255, 0, 0.1);
+    border: 3px solid #00ff00;
+    border-radius: 10px;
+    color: #00ff00;
+    text-align: center;
+    width: 400px;
+    transition: all 0.3s;
+    box-shadow: 0 0 15px #00ff00;
+}
+
+#playerName:focus {
+    outline: none;
+    background: rgba(0, 255, 0, 0.2);
+    box-shadow: 0 0 30px #00ff00;
+    border-color: #00cc00;
+}
+
+#playerName::placeholder {
+    color: rgba(0, 255, 0, 0.5);
+}
+
+#startButton {
+    padding: 25px 70px;
+    font-size: 42px;
+    background: #00ff00;
+    border: 3px solid #00aa00;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 20px #00ff00;
+}
+
+#startButton:hover {
+    background: #00cc00;
+    box-shadow: 0 0 40px #00ff00;
+}
+
+#backFromNameButton {
+    padding: 25px 70px;
+    font-size: 42px;
+    background: #ff6600;
+    border: 3px solid #cc4400;
+    box-shadow: 0 0 20px #ff6600;
+}
+
+#backFromNameButton:hover {
+    background: #ff8800;
+    box-shadow: 0 0 40px #ff6600;
+}
+
+/* Leaderboard Panel */
+#leaderboardPanel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #000 0%, #0a2a0a 50%, #000 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    pointer-events: auto;
+}
+
+#leaderboardContent {
+    text-align: center;
+    animation: fadeIn 0.8s ease-in;
+    background: rgba(10, 40, 10, 0.95);
+    padding: 40px;
+    border: 3px solid #00ff00;
+    border-radius: 20px;
+    box-shadow: 0 0 40px #00ff00;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+#leaderboardContent h2 {
+    font-size: 60px;
+    color: #00ff00;
+    text-shadow: 0 0 20px #00ff00;
+    margin-bottom: 30px;
+    letter-spacing: 3px;
+}
+
+#leaderboardTable {
+    width: 100%;
+    color: #00ff00;
+    font-size: 24px;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+#leaderboardTable thead {
+    border-bottom: 3px solid #00ff00;
+}
+
+#leaderboardTable th {
+    padding: 15px;
+    color: #00ff00;
+    font-weight: bold;
+}
+
+#leaderboardTable td {
+    padding: 15px;
+    border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+#backFromLeaderboardButton {
+    display: block;
+    margin-top: 30px;
+    padding: 20px 60px;
+    font-size: 32px;
+    background: #ff6600;
+    border: 3px solid #cc4400;
+    box-shadow: 0 0 20px #ff6600;
+    cursor: pointer;
+}
+
+#backFromLeaderboardButton:hover {
+    background: #ff8800;
+    box-shadow: 0 0 40px #ff6600;
+    transform: scale(1.05);
+}
+
+#backFromLeaderboardButton:active {
+    transform: scale(0.95);
+}
+
+/* Menu buttons styling */
+#leaderboardButton {
+    padding: 25px 70px;
+    font-size: 36px;
+    background: #0066ff;
+    border: 3px solid #0044cc;
+    margin-top: 20px;
+    box-shadow: 0 0 20px #0066ff;
+}
+
+#leaderboardButton:hover {
+    background: #0088ff;
+    box-shadow: 0 0 40px #0066ff;
+}

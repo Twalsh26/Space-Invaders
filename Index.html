@@ -11,8 +11,9 @@
         <button id="adminButton" title="Admin panel" onclick="toggleAdminPanel()"></button>
         <div id="menuContent">
             <h1 id="gameTitle">SPACE DIVERS!</h1>
-            <p id="menuSubtitle">Defend the generator from invaders</p>
-            <button id="playButton" onclick="startGame()">PLAY</button>
+            <p id="menuSubtitle">You are the last man standing on a dying planet. Survive until rescue arrives.</p>
+            <button id="playButton" onclick="showNameEntry()">PLAY</button>
+            <button id="leaderboardButton" onclick="showLeaderboard()">LEADERBOARD</button>
         </div>
         <div id="adminPanel" style="display:none;">
             <h2>Admin Level Select</h2>
@@ -27,6 +28,16 @@
             <div id="adminPanelActions">
                 <button onclick="closeAdminPanel()">Close</button>
             </div>
+        </div>
+    </div>
+    <div id="nameEntryPanel" style="display:none;">
+        <div id="nameEntryContent">
+            <h1 id="nameEntryTitle">ENTER YOUR NAME</h1>
+            <div id="nameInputSection">
+                <input type="text" id="playerName" placeholder="Enter your name..." maxlength="20" autocomplete="off" onkeypress="if(event.key==='Enter') startGame()">
+            </div>
+            <button id="startButton" onclick="startGame()">START GAME</button>
+            <button id="backFromNameButton" onclick="backToMenu()">BACK</button>
         </div>
     </div>
     <div id="gameContainer" style="display:none;">
@@ -63,12 +74,30 @@
         <div id="gameOverPanel" style="display:none;">
             <h2>Game Over!</h2>
             <p id="gameOverText"></p>
-            <button onclick="location.reload()">Play Again</button>
+            <p id="gameOverScore"></p>
+            <button onclick="backToMenu()">Return to Menu</button>
         </div>
         <div id="levelCompletePanel" style="display:none;">
             <h2>All Levels Complete!</h2>
             <p>Final Score: <span id="finalScore">0</span></p>
-            <button onclick="location.reload()">Play Again</button>
+            <button onclick="backToMenu()">Return to Menu</button>
+        </div>
+        <div id="leaderboardPanel" style="display:none;">
+            <div id="leaderboardContent">
+                <h2>LEADERBOARD</h2>
+                <table id="leaderboardTable">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Player Name</th>
+                            <th>High Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                    </tbody>
+                </table>
+                <button id="backFromLeaderboardButton" onclick="backToMenu()">BACK</button>
+            </div>
         </div>
     </div>
 

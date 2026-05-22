@@ -19,7 +19,7 @@ let selectedLevel = LEVEL_1;
 
 // Load Images
 const images = {};
-const imageCount = 11;
+const imageCount = 14;
 let imagesLoaded = 0;
 
 const imgPlayer = new Image();
@@ -62,6 +62,18 @@ const imgHealth = new Image();
 imgHealth.src = 'Img/HealthSprite.webp';
 imgHealth.onload = () => { images.health = imgHealth; imagesLoaded++; };
 
+const imgEgg = new Image();
+imgEgg.src = 'Img/Alien.egg.png';
+imgEgg.onload = () => { images.egg = imgEgg; imagesLoaded++; };
+
+const imgShotgun = new Image();
+imgShotgun.src = 'Img/ShotG.sprite.png';
+imgShotgun.onload = () => { images.shotgun = imgShotgun; imagesLoaded++; };
+
+const imgMiniGun = new Image();
+imgMiniGun.src = 'Img/MiniG.Powerup.webp';
+imgMiniGun.onload = () => { images.minigun = imgMiniGun; imagesLoaded++; };
+
 const imgSupplyDrop = new Image();
 imgSupplyDrop.src = 'Img/SuppyDropSprite.png';
 imgSupplyDrop.onload = () => { images.supplyDrop = imgSupplyDrop; imagesLoaded++; };
@@ -78,15 +90,21 @@ class Player {
         this.maxHealth = 100;
         this.ammo = 30;
         this.maxAmmo = 100;
+        this.baseDamage = 1;
         this.damage = 1;
+        this.baseFireRate = 300;
         this.fireRate = 300; // milliseconds between shots
         this.lastShot = 0;
+        this.powerup = null;
+        this.powerupEndTime = 0;
         this.keys = {};
     }
 
     update() {
         if (this.keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
         if (this.keys['ArrowRight'] && this.x < CANVAS.width - this.width) this.x += this.speed;
+
+        this.updatePowerup();
     }
 
     draw() {
@@ -117,13 +135,50 @@ class Player {
         if (now - this.lastShot > this.fireRate && this.ammo > 0) {
             this.lastShot = now;
             this.ammo--;
-            return new Bullet(this.x + this.width / 2 - 4, this.y);
+            const centerX = this.x + this.width / 2 - 4;
+
+            if (this.powerup === 'shotgun') {
+                return [
+                    new Bullet(centerX, this.y, -1.5, -12),
+                    new Bullet(centerX, this.y, 0, -12),
+                    new Bullet(centerX, this.y, 1.5, -12)
+                ];
+            }
+
+            return [new Bullet(centerX, this.y)];
         }
         return null;
     }
 
+    updatePowerup() {
+        if (this.powerup && Date.now() > this.powerupEndTime) {
+            this.powerup = null;
+            this.applyPowerupStats();
+        }
+    }
+
+    activatePowerup(type, duration) {
+        this.powerup = type;
+        this.powerupEndTime = Date.now() + duration;
+        this.applyPowerupStats();
+    }
+
+    applyPowerupStats() {
+        if (this.powerup === 'shotgun') {
+            this.fireRate = Math.max(450, this.baseFireRate + 150);
+            this.damage = this.baseDamage * 3;
+        } else if (this.powerup === 'minigun') {
+            this.fireRate = Math.max(80, this.baseFireRate - 180);
+            this.damage = this.baseDamage + 0.5;
+        } else {
+            this.fireRate = this.baseFireRate;
+            this.damage = this.baseDamage;
+        }
+    }
+
     upgradeDamage() {
-        this.damage += 0.5;
+        this.baseDamage += 0.5;
+        this.applyPowerupStats();
     }
 
     upgradeHealth() {
@@ -132,7 +187,8 @@ class Player {
     }
 
     upgradeFireRate() {
-        this.fireRate = Math.max(100, this.fireRate - 50);
+        this.baseFireRate = Math.max(100, this.baseFireRate - 50);
+        this.applyPowerupStats();
     }
 
     pickupAmmo(amount) {
@@ -142,16 +198,18 @@ class Player {
 
 // Bullet Class
 class Bullet {
-    constructor(x, y) {
+    constructor(x, y, vx = 0, vy = -12, width = 8, height = 30) {
         this.x = x;
         this.y = y;
-        this.width = 8;
-        this.height = 30;
-        this.speed = 12;
+        this.width = width;
+        this.height = height;
+        this.vx = vx;
+        this.vy = vy;
     }
 
     update() {
-        this.y -= this.speed;
+        this.x += this.vx;
+        this.y += this.vy;
     }
 
     draw() {
@@ -273,6 +331,69 @@ class HealthRestorePowerup {
     }
 }
 
+// Shotgun Powerup Class
+class ShotgunPowerup {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 40;
+        this.height = 40;
+        this.speed = 3;
+        this.type = 'shotgun';
+    }
+
+    update() {
+        this.y += this.speed;
+    }
+
+    draw() {
+        if (images.shotgun) {
+            CTX.drawImage(images.shotgun, this.x, this.y, this.width, this.height);
+        } else {
+            CTX.fillStyle = '#8b0000';
+            CTX.fillRect(this.x, this.y, this.width, this.height);
+            CTX.strokeStyle = '#ff4500';
+            CTX.lineWidth = 3;
+            CTX.strokeRect(this.x, this.y, this.width, this.height);
+        }
+    }
+
+    isOffScreen() {
+        return this.y > CANVAS.height;
+    }
+}
+
+// MiniGun Powerup Class
+class MiniGunPowerup {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 40;
+        this.height = 40;
+        this.speed = 3;
+        this.type = 'minigun';
+    }
+
+    update() {
+        this.y += this.speed;
+    }
+
+    draw() {
+        if (images.minigun) {
+            CTX.drawImage(images.minigun, this.x, this.y, this.width, this.height);
+        } else {
+            CTX.fillStyle = '#1e90ff';
+            CTX.fillRect(this.x, this.y, this.width, this.height);
+            CTX.strokeStyle = '#00ffff';
+            CTX.lineWidth = 3;
+            CTX.strokeRect(this.x, this.y, this.width, this.height);
+        }
+    }
+
+    isOffScreen() {
+        return this.y > CANVAS.height;
+    }
+}
 // Enemy Base Class
 class Enemy {
     constructor(x, y, type = 'basic') {
@@ -602,6 +723,11 @@ class Orb {
     }
 
     draw() {
+        if (images.egg) {
+            CTX.drawImage(images.egg, this.x, this.y, this.width, this.height);
+            return;
+        }
+
         CTX.fillStyle = this.color;
         CTX.beginPath();
         CTX.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, 0, Math.PI * 2);
@@ -623,8 +749,8 @@ class Boss {
         this.y = y;
         this.width = 200;
         this.height = 200;
-        this.health = 35;
-        this.maxHealth = 35;
+        this.health = 150;
+        this.maxHealth = 150;
         this.speed = 4;
         this.direction = 1;
         this.attackTimer = 0;
@@ -769,8 +895,14 @@ class Game {
             this.player.keys[e.key] = true;
             if (e.key === ' ') {
                 e.preventDefault();
-                const bullet = this.player.shoot();
-                if (bullet) this.bullets.push(bullet);
+                const bullets = this.player.shoot();
+                if (bullets) {
+                    if (Array.isArray(bullets)) {
+                        this.bullets.push(...bullets);
+                    } else {
+                        this.bullets.push(bullets);
+                    }
+                }
             }
         });
 
@@ -968,6 +1100,18 @@ class Game {
         // Update player
         this.player.update();
 
+        // Auto-fire while holding fire with minigun powerup
+        if (this.player.keys[' '] && this.player.powerup === 'minigun') {
+            const bullets = this.player.shoot();
+            if (bullets) {
+                if (Array.isArray(bullets)) {
+                    this.bullets.push(...bullets);
+                } else {
+                    this.bullets.push(bullets);
+                }
+            }
+        }
+
         // Spawn a supply drop when ammo is empty
         if (this.player.ammo <= 0 && !this.supplyDropActive) {
             const startX = Math.min(Math.max(20, this.player.x + this.player.width / 2 - 20), CANVAS.width - 60);
@@ -1067,6 +1211,12 @@ class Game {
                 }
                 if (Math.random() < 0.13) {
                     this.powerups.push(new HealthRestorePowerup(this.boss.x + this.boss.width / 2 - 12, this.boss.y + this.boss.height));
+                }
+                if (Math.random() < 0.15) {
+                    this.powerups.push(new ShotgunPowerup(this.boss.x + this.boss.width / 2 - 12, this.boss.y + this.boss.height));
+                }
+                if (Math.random() < 0.15) {
+                    this.powerups.push(new MiniGunPowerup(this.boss.x + this.boss.width / 2 - 12, this.boss.y + this.boss.height));
                 }
 
                 if (!this.boss.isAlive()) {
@@ -1233,6 +1383,10 @@ class Game {
                     this.applyWallRepairPowerup();
                 } else if (this.powerups[i].type === 'health') {
                     this.player.health = Math.min(this.player.maxHealth, this.player.health + this.powerups[i].healAmount);
+                } else if (this.powerups[i].type === 'shotgun') {
+                    this.player.activatePowerup('shotgun', 10000);
+                } else if (this.powerups[i].type === 'minigun') {
+                    this.player.activatePowerup('minigun', 10000);
                 }
                 this.powerups.splice(i, 1);
                 i--;
@@ -1311,6 +1465,14 @@ class Game {
 
         if (Math.random() < 0.13) {
             this.powerups.push(new HealthRestorePowerup(enemy.x + enemy.width / 2 - 12, enemy.y));
+        }
+
+        if (Math.random() < 0.15) {
+            this.powerups.push(new ShotgunPowerup(enemy.x + enemy.width / 2 - 12, enemy.y));
+        }
+
+        if (Math.random() < 0.15) {
+            this.powerups.push(new MiniGunPowerup(enemy.x + enemy.width / 2 - 12, enemy.y));
         }
     }
 
@@ -1454,6 +1616,7 @@ class Game {
         document.getElementById('upgradePanel').style.display = 'none';
         document.getElementById('levelCompletePanel').style.display = 'block';
         document.getElementById('finalScore').textContent = this.score;
+        updateLeaderboardWithScore(this.score);
     }
 
     gameOver() {
@@ -1461,6 +1624,8 @@ class Game {
         document.getElementById('gameOverPanel').style.display = 'block';
         const reasonText = this.lossReason ? `${this.lossReason}\n\n` : '';
         document.getElementById('gameOverText').textContent = `${reasonText}Final Score: ${this.score} on Level ${this.level}`;
+        document.getElementById('gameOverScore').textContent = `You reached Level ${this.level}`;
+        updateLeaderboardWithScore(this.score);
     }
 
     gameLoop() {
@@ -1489,13 +1654,25 @@ function selectAdminLevel(level) {
     });
 }
 
+function showNameEntry() {
+    document.getElementById('mainMenuPanel').style.display = 'none';
+    document.getElementById('nameEntryPanel').style.display = 'flex';
+    document.getElementById('playerName').focus();
+}
+
 function startGame() {
+    const playerName = document.getElementById('playerName').value.trim();
+    if (!playerName) {
+        alert('Please enter your name to play!');
+        return;
+    }
+    
     // Hide menu and show game container
+    document.getElementById('nameEntryPanel').style.display = 'none';
     document.getElementById('mainMenuPanel').style.display = 'none';
     const gameContainer = document.getElementById('gameContainer');
     gameContainer.style.display = 'block';
     gameContainer.style.pointerEvents = 'auto';
-    document.getElementById('adminPanel').style.display = 'none';
     
     // Wait for images to load
     const checkImagesLoaded = setInterval(() => {
@@ -1505,6 +1682,54 @@ function startGame() {
             game.gameLoop();
         }
     }, 100);
+}
+
+function backToMenu() {
+    document.getElementById('gameContainer').style.display = 'none';
+    document.getElementById('nameEntryPanel').style.display = 'none';
+    document.getElementById('leaderboardPanel').style.display = 'none';
+    document.getElementById('mainMenuPanel').style.display = 'block';
+    document.getElementById('upgradePanel').style.display = 'none';
+    document.getElementById('gameOverPanel').style.display = 'none';
+    document.getElementById('levelCompletePanel').style.display = 'none';
+}
+
+function loadLeaderboard() {
+    const data = localStorage.getItem('spaceInvadersLeaderboard');
+    return data ? JSON.parse(data) : {};
+}
+
+function saveLeaderboard(leaderboard) {
+    localStorage.setItem('spaceInvadersLeaderboard', JSON.stringify(leaderboard));
+}
+
+function updateLeaderboardWithScore(score) {
+    const playerName = document.getElementById('playerName').value.trim() || 'Anonymous';
+    const leaderboard = loadLeaderboard();
+    
+    if (!leaderboard[playerName] || score > leaderboard[playerName]) {
+        leaderboard[playerName] = score;
+        saveLeaderboard(leaderboard);
+    }
+}
+
+function showLeaderboard() {
+    const leaderboard = loadLeaderboard();
+    const sortedPlayers = Object.entries(leaderboard)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+    
+    const tbody = document.getElementById('leaderboardBody');
+    tbody.innerHTML = '';
+    
+    sortedPlayers.forEach((entry, index) => {
+        const [name, score] = entry;
+        const row = tbody.insertRow();
+        row.innerHTML = `<td>${index + 1}</td><td>${name}</td><td>${score}</td>`;
+    });
+    
+    document.getElementById('mainMenuPanel').style.display = 'none';
+    document.getElementById('leaderboardPanel').style.display = 'flex';
 }
 
 window.addEventListener('load', () => {
